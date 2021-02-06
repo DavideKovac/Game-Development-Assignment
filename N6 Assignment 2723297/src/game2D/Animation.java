@@ -188,6 +188,26 @@ public class Animation {
     	}
     }
     
+    /**
+     * Loads a complete animation from an animation sheet and adds each
+     * frame in the sheet to the animation with the given frameDuration.
+     * this load it in the opposite way(for mirrored images)
+     * 
+     * @param fileName	The path to the file to load the animations from
+     * @param rows		How many rows there are in the sheet
+     * @param columns	How many columns there are in the sheet
+     * @param frameDuration	The duration of each frame
+     */
+    public void loadAnimationFromSheetOpposite(String fileName, int columns, int rows, int frameDuration)
+    {
+    	Image sheet = new ImageIcon(fileName).getImage();
+    	Image[] images = getImagesFromSheet(sheet, columns, rows);
+    	
+    	for (int i=images.length; i>0; i--)
+    	{
+    		addFrame(images[i-1], frameDuration);
+    	}
+    }
 
     
     /**
