@@ -10,6 +10,7 @@ import javax.swing.ImageIcon;
 
 import game2D.*;
 
+
 public class Game extends GameCore {
 
 	/** Screen Width */
@@ -44,6 +45,13 @@ public class Game extends GameCore {
 	
 	/**Animation Attack left*/
 	Animation attackleftplayer;
+	
+	/**Animation Attack left*/
+	Animation dierightplayer;
+	
+	/**Animation Attack left*/
+	Animation dieleftplayer;
+	
 
 	/** Background image */
 	Image background;
@@ -92,44 +100,71 @@ public class Game extends GameCore {
 	public void init() {
 		/** Temporary reference for sprite */
 		Sprite s;
+		
+		// Example of playing a sound as a thread
+		//Sound backgroundmusic= new Sound("sounds/Backgroundmusic.wav");
+		//backgroundmusic.start();
 
-		background = new ImageIcon("images/background.png").getImage();
-		middleground = new ImageIcon("images/middleground.png").getImage();
+		loadImages();
 
 		// Load the tile map and print it out so we can check it is valid
 		tmap.loadMap("maps", "map.txt");
 
-		// Initialise the sprites and animation
-		idlerightplayer = new Animation();
-		idlerightplayer.loadAnimationFromSheet("images/Archer_idle.png", 8, 1, 60);
+		// Initialise the sprite and animation
+		loadAnimation();
 		
-		idleleftplayer = new Animation();
-		idleleftplayer.loadAnimationFromSheet("images/Archer_idleleft.png", 8, 1, 60);
-
-		runrightplayer = new Animation();
-		runrightplayer.loadAnimationFromSheet("images/Archer_run.png", 8, 1, 60);
-
-		runleftplayer = new Animation();
-		runleftplayer.loadAnimationFromSheet("images/Archer_runleft.png", 8, 1, 60);
 		
-		jumprightplayer=new Animation();
-		jumprightplayer.loadAnimationFromSheet("images/Archer_jump.png",12,1,60);
-		
-		jumpleftplayer=new Animation();
-		jumpleftplayer.loadAnimationFromSheetOpposite("images/Archer_jumpleft.png",12,1,60);
-		
-		attackrightplayer=new Animation();
-		attackrightplayer.loadAnimationFromSheet("images/Archer_Attack.png",14,1,60);
-		
-		attackleftplayer=new Animation();
-		attackleftplayer.loadAnimationFromSheetOpposite("images/Archer_attackleft.png",14,1,30);
-
 		player = new Sprite(idlerightplayer);
-
+      
 		setSize(tmap.getPixelWidth() / 4, tmap.getPixelHeight());
 		setVisible(true);
 
 		initialiseGame();
+	}
+	/**
+	 * Load the images for the game
+	 */
+	public void loadImages()
+	{
+		background = new ImageIcon("images/background.png").getImage();
+		middleground = new ImageIcon("images/middleground.png").getImage();
+	}
+	/**
+	 * Load the animation for the game
+	 */
+	public void loadAnimation()
+	{
+		// Initialise the sprites and animation
+		idlerightplayer = new Animation();
+		idlerightplayer.loadAnimationFromSheet("images/gothic-hero-idle.png", 4, 1, 60);
+				
+		idleleftplayer = new Animation();
+		idleleftplayer.loadAnimationFromSheet("images/gothic-hero-idle-left.png", 4, 1, 60);
+
+		runrightplayer = new Animation();
+		runrightplayer.loadAnimationFromSheet("images/gothic-hero-run.png", 12, 1, 60);
+
+		runleftplayer = new Animation();
+		runleftplayer.loadAnimationFromSheet("images/gothic-hero-run-left.png", 12, 1, 60);
+				
+		jumprightplayer=new Animation();
+		jumprightplayer.loadAnimationFromSheet("images/gothic-hero-jump.png",5,1,60);
+				
+		jumpleftplayer=new Animation();
+		jumpleftplayer.loadAnimationFromSheetOpposite("images/gothic-hero-jump-left.png",5,1,60);
+				
+	    attackrightplayer=new Animation();
+		attackrightplayer.loadAnimationFromSheet("images/gothic-hero-attack.png",6,1,30);
+				
+		attackleftplayer=new Animation();
+		attackleftplayer.loadAnimationFromSheetOpposite("images/gothic-hero-attack-left.png",6,1,30);
+		
+		dierightplayer=new Animation();
+		dierightplayer.loadAnimationFromSheet("images/gothic-hero-die.png",3,1,60);
+		
+		dieleftplayer=new Animation();
+		dieleftplayer.loadAnimationFromSheetOpposite("images/gothic-hero-die-left.png",3,1,60);
+		
 	}
 
 	/**
@@ -159,9 +194,10 @@ public class Game extends GameCore {
 		// Apply offsets to player and draw
 		player.setOffsets(xo, yo);
 		player.draw(g);
-
+        
 		// Apply offsets to tile map and draw it
 		tmap.draw(g, xo, yo);
+		player.drawBoundingBox(g);
 
 	}
 
@@ -178,6 +214,10 @@ public class Game extends GameCore {
 		
 		// Now update the sprites animation and position
 		player.update(elapsed);
+		// Then check for any collisions that may have occurred
+        //handleScreenEdge(player, tmap, elapsed);
+        checkTileCollision(player, tmap);
+        
 
 	}
 
@@ -205,8 +245,8 @@ public class Game extends GameCore {
 			if(jump)
 			{
 				player.setAnimation(jumpleftplayer);
-				player.setY(player.getY()-2);
-	       		player.setY(player.getY()+2);
+				player.setY(player.getY()-5);
+	       		player.setY(player.getY()+5);
 	       		
 			}
 		}
@@ -314,4 +354,78 @@ public class Game extends GameCore {
 			break;
 		}
 	}
+	
+	/**
+     * Checks and handles collisions with the edge of the screen
+     * 
+     * @param s			The Sprite to check collisions for
+     * @param tmap		The tile map to check 
+     * @param elapsed	How much time has gone by since the last call
+     */
+    public void handleScreenEdge(Sprite s, TileMap tmap, long elapsed)
+    {
+    	// This method just checks if the sprite has gone off the bottom screen.
+    	// Ideally you should use tile collision instead of this approach
+    	
+        if (s.getY() + s.getHeight() > tmap.getPixelHeight())
+        {
+        	// Put the player back on the map 1 pixel above the bottom
+        	s.setY(tmap.getPixelHeight() - s.getHeight() - 1); 
+        	
+        	// and make them bounce
+        	s.setVelocityY(-s.getVelocityY());
+        }
+    }
+    
+    public void checkTileCollision(Sprite s, TileMap tmap)
+    {
+    	// Take a note of a sprite's current position
+    	float sx = s.getX();
+    	float sy = s.getY();
+    	
+    	
+    	// Find out how wide and how tall a tile is
+    	float tileWidth = tmap.getTileWidth();
+    	float tileHeight = tmap.getTileHeight();
+    	
+    	// Divide the sprites x coordinate by the width of a tile, to get
+    	// the number of tiles across the x axis that the sprite is positioned at 
+    	int	xtile = (int)(sx / tileWidth);
+    	System.out.println(xtile);
+    	// The same applies to the y coordinate
+    	int ytile = (int)(sy / tileHeight);
+    	System.out.println(ytile);
+    	// What tile character is at the top left of the sprite s?
+    	char ch = tmap.getTileChar(xtile, ytile);
+    	System.out.println(ch);
+    	
+    	if (ch != '.') // If it's not a dot (empty space), handle it
+    	{
+    		// Here we just stop the sprite. 
+           s.setX(s.getX()-2);
+    		
+    		// You should move the sprite to a position that is not colliding
+    	}
+    	
+    	// We need to consider the other corners of the sprite
+    	// The above looked at the top left position, let's look at the bottom left.
+    	xtile = (int)(sx / tileWidth);
+    	ytile = (int)((sy + s.getHeight())/ tileHeight);
+    	ch = tmap.getTileChar(xtile, ytile);
+    	
+    	// If it's not empty space
+     	if (ch != '.') 
+    	{
+    		// Let's make the sprite bounce
+    		s.stop();
+    		
+    	}
+     	
+    }
+   
+    public boolean boundingBoxCollision(Sprite s1, Sprite s2)
+    {
+    	return false;   	
+    }
+    
 }
